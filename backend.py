@@ -9,7 +9,7 @@ torch.cuda.empty_cache()
 
 
 def createPipe(controlnet):
-    pipe = StableDiffusionControlNetPipeline.from_single_file("./arthemyObjects_v10"
+    pipe = StableDiffusionControlNetPipeline.from_single_file("/home/mattia/Desktop/models/arthemyObjects_v10"
                                                               ".safetensors", controlnet=controlnet,
                                                               safety_checker=None, torch_dtype=torch.float16).to("cuda")
 
