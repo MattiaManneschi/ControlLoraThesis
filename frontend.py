@@ -8,6 +8,8 @@ import imageio.v3 as iio
 
 buf = BytesIO()
 
+st.write("# Welcome to SnapArt")
+
 drawing_mode = st.sidebar.selectbox(
     "Drawing tool:", ("point", "freedraw", "line", "rect", "circle", "transform")
 )
