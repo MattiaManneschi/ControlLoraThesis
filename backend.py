@@ -1,9 +1,10 @@
 from PIL import Image
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, StableDiffusionUpscalePipeline, \
-    UniPCMultistepScheduler
+    DDIMScheduler
 import torch
 from controlnet_aux import HEDdetector
 import streamlit as st
+from matplotlib import pyplot as plt
 
 torch.cuda.empty_cache()
 
@@ -13,7 +14,7 @@ def createPipe(controlnet):
                                                               ".safetensors", controlnet=controlnet,
                                                               safety_checker=None, torch_dtype=torch.float16).to("cuda")
 
-    pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+    pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
 
     pipe.enable_xformers_memory_efficient_attention()
 
@@ -27,10 +28,17 @@ def createPipe(controlnet):
 
 
 def scribbleInf(image, p, neg_p, n):
+    # processor = HEDdetector.from_pretrained('lllyasviel/Annotators')
 
-    processor = HEDdetector.from_pretrained('lllyasviel/Annotators')
+    # plt.imshow(image)
+    # plt.show()
 
-    control_image = processor(image, scribble=True)
+    # control_image = processor(image, scribble=True)
+
+    # plt.imshow(control_image)
+    # plt.show()
+
+    image = Image.fromarray(image, 'RGB')
 
     controlnet = ControlNetModel.from_pretrained("lllyasviel/control_v11p_sd15_scribble", torch_dtype=torch.float16)
 
@@ -49,7 +57,8 @@ def scribbleInf(image, p, neg_p, n):
                                     "verybadimagenegative_v1.3",
             num_inference_steps=35,
             generator=generator,
-            image=control_image
+            image=image,
+            guidance_scale=7.5
         ).images[0]
         images.append(image)
 
