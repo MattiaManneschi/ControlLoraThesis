@@ -1,79 +1,52 @@
+import base64
+import json
+from io import BytesIO
+
+import requests
 from PIL import Image
-from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, StableDiffusionUpscalePipeline, \
-    DDIMScheduler
-import torch
-from controlnet_aux import HEDdetector
-import streamlit as st
-from matplotlib import pyplot as plt
 
-torch.cuda.empty_cache()
+url = "https://179a-34-27-204-220.ngrok-free.app"
+s = requests.Session()
 
 
-def createPipe(controlnet):
-    pipe = StableDiffusionControlNetPipeline.from_single_file("/home/mattia/Desktop/models/arthemyObjects_v10"
-                                                              ".safetensors", controlnet=controlnet,
-                                                              safety_checker=None, torch_dtype=torch.float16).to("cuda")
+def inference(prompt, control, n, modelType):
+    if prompt == "" or modelType == "":
+        return "Error"
 
-    pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
-
-    pipe.enable_xformers_memory_efficient_attention()
-
-    pipe.enable_model_cpu_offload()
-
-    pipe.load_lora_weights("/home/mattia/Desktop/models/more_details.safetensors")
-    pipe.load_textual_inversion("/home/mattia/Desktop/models/BadDream.pt")
-    pipe.load_textual_inversion("/home/mattia/Desktop/models/verybadimagenegative_v1.3.pt")
-
-    return pipe
-
-
-def scribbleInf(image, p, neg_p, n):
-    # processor = HEDdetector.from_pretrained('lllyasviel/Annotators')
-
-    # plt.imshow(image)
-    # plt.show()
-
-    # control_image = processor(image, scribble=True)
-
-    # plt.imshow(control_image)
-    # plt.show()
-
-    image = Image.fromarray(image, 'RGB')
-
-    controlnet = ControlNetModel.from_pretrained("lllyasviel/control_v11p_sd15_scribble", torch_dtype=torch.float16)
-
-    pipe = createPipe(controlnet)
-
-    generator = torch.manual_seed(0)
-
+    controlImage64 = ""
     images = []
-
+    with open("output.png", "rb") as image:
+        outputImage64 = base64.b64encode(image.read()).decode('utf8')
+    if control:
+        with open("control.png", "rb") as image:
+            controlImage64 = base64.b64encode(image.read()).decode('utf8')
+    currentDict = {"image": outputImage64, "prompt": prompt,
+                   "controlImage": controlImage64, "modelType": modelType, "mode": "inference"}
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     for i in range(n):
-        st.write("processing image {}....".format(i+1))
-        image = pipe(
-            prompt=p + "product shot, finely detailed, purism, art, 100mm advertising photography, studio lighting, "
-                       "8k, hyperdetailed",
-            negative_prompt=neg_p + "BadDream, (fake), high contrast, oversharp, repetition, boring, emotionless, "
-                                    "verybadimagenegative_v1.3",
-            num_inference_steps=35,
-            generator=generator,
-            image=image,
-            guidance_scale=7.5
-        ).images[0]
-        images.append(image)
-
+        currentDict["it"] = i + 2
+        payload = json.dumps(currentDict)
+        response = s.post(url, data=payload, headers=headers, verify=False)
+        images.append(Image.open(BytesIO(response.content)))
     return images
 
 
-def upscale(image):
-    upscaling_model = "stabilityai/stable-diffusion-x4-upscaler"
-    pipeline = StableDiffusionUpscalePipeline.from_pretrained(upscaling_model, torch_dtype=torch.float32).to("cuda")
+def training(instancePrompt, validationPrompt, n):
+    if validationPrompt == "" or instancePrompt == "":
+        return "Error"
 
-    pipeline.enable_xformers_memory_efficient_attention()
-    pipeline.enable_attention_slicing()
+    currentDict = {"instancePrompt": instancePrompt, "validationPrompt": validationPrompt, "nOfImages": n,
+                   "mode": "training"}
 
-    pipeline.enable_model_cpu_offload()
+    for i in range(n):
+        with open("image" + str(i) + ".png", "rb") as im:
+            outputImage64 = base64.b64encode(im.read()).decode('utf8')
+            currentDict["image" + str(i)] = outputImage64
 
-    prompt = "UHD, 4k, hyper realistic, extremely detailed, professional, vibrant, not grainy, smooth"
+    payload = json.dumps(currentDict)
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-    upscaled_image = pipeline(prompt=prompt, image=image).images[0]
+    response = s.post(url, data=payload, headers=headers, verify=False)
+    safetensorsFile = response.content
+
+    return safetensorsFile
