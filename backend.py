@@ -9,7 +9,7 @@ from PIL import Image
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-url = "https://e533-34-147-89-28.ngrok-free.app"
+url = "https://e533-34-147-89-28.ngrok-free.app"  # temporary link
 s = requests.Session()
 
 
