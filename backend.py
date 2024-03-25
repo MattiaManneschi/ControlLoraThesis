@@ -1,11 +1,15 @@
 import base64
 import json
+import time
 from io import BytesIO
 
 import requests
+import urllib3
 from PIL import Image
 
-url = "https://179a-34-27-204-220.ngrok-free.app"
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+url = "https://e533-34-147-89-28.ngrok-free.app"
 s = requests.Session()
 
 
@@ -47,6 +51,7 @@ def training(instancePrompt, validationPrompt, n):
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
     response = s.post(url, data=payload, headers=headers, verify=False)
+
     safetensorsFile = response.content
 
     return safetensorsFile
