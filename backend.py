@@ -1,6 +1,5 @@
 import base64
 import json
-import time
 from io import BytesIO
 
 import requests
@@ -9,7 +8,7 @@ from PIL import Image
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-url = "https://e533-34-147-89-28.ngrok-free.app"  # temporary link
+url = ""
 s = requests.Session()
 
 
