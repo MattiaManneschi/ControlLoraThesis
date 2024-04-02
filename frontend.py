@@ -22,6 +22,9 @@ if appMode == "inference":
     modelType = option_menu("Choose the model", ["Bedside Lamp Model", "Desk Lamp Model", "Table Lamp Model"],
                             icons=["moon", "pen", "lamp"],
                             menu_icon="window", default_index=0, orientation="horizontal")
+    adapterType = option_menu("Choose the adapter", ["CannyEdge", "Scribble"],
+                              icons=["border", "pencil"],
+                              menu_icon="controller", default_index=0, orientation="horizontal")
     drawing_mode = st.sidebar.selectbox(
         "Drawing tool:", ("point", "freedraw", "line", "rect", "circle", "transform")
     )
@@ -38,7 +41,7 @@ if appMode == "inference":
     it_n = st.sidebar.number_input("Iterations number:", min_value=1, max_value=4)
     control = st.checkbox("Check if you want to add a controlling image")
 
-    p = st.text_area("# Write your prompt here:")
+    p = st.text_area("# Write your prompt here:", placeholder="The more specific you are, the better it is.")
 
     col2, col3 = st.columns([0.5, 0.5])
 
@@ -68,7 +71,7 @@ if appMode == "inference":
             st.text("")
             if st.button("START INFERENCE", type="primary"):
                 with st.spinner("# Processing your image. Please wait"):
-                    new_images = backend.inference(p, control, it_n, modelType)
+                    new_images = backend.inference(p, control, it_n, modelType, adapterType)
                     time.sleep(3)
                     if new_images == "Error":
                         st.write("# Something went wrong, check your inputs!")
@@ -98,8 +101,9 @@ elif appMode == "train":
         file_bytes = np.asarray(bytearray(image.read()), dtype=np.uint8)
         opencv_image = cv2.imdecode(file_bytes, 1)
         cv2.imwrite("image" + str(i) + ".png".format(i=i), opencv_image)
-    instancePrompt = st.text_area("# Write your instance prompt here:")
-    validationPrompt = st.text_area("# Write your validation prompt here: ")
+    instancePrompt = st.text_area("# Write your instance prompt here:", placeholder="Example: a photo of a sks lamp")
+    validationPrompt = st.text_area("# Write your validation prompt here:", placeholder="Example: a photo of a sks "
+                                                                                        "lamp on a mountain")
     n = len(images)
     if st.button("START TRAINING", type="primary"):
         with st.spinner("# Processing your images (it might take a while...). Please wait"):

@@ -8,11 +8,11 @@ from PIL import Image
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-url = ""
+url = "https://64d7-34-32-242-51.ngrok-free.app"
 s = requests.Session()
 
 
-def inference(prompt, control, n, modelType):
+def inference(prompt, control, n, modelType, adapterType):
     if prompt == "" or modelType == "":
         return "Error"
 
@@ -24,7 +24,7 @@ def inference(prompt, control, n, modelType):
         with open("control.png", "rb") as image:
             controlImage64 = base64.b64encode(image.read()).decode('utf8')
     currentDict = {"image": outputImage64, "prompt": prompt,
-                   "controlImage": controlImage64, "modelType": modelType, "mode": "inference"}
+                   "controlImage": controlImage64, "modelType": modelType, "mode": "inference", "adapter": adapterType}
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     for i in range(n):
         currentDict["it"] = i + 2
